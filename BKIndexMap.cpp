@@ -19,10 +19,6 @@ void BkIdxMapBase::Unlock()
     m_state = State::Mutated;
 }
 
-
-
-
-
 TEST(IndexedMap, Construct)
 {
     BkIdxMap<int,int> simple_map;
@@ -93,6 +89,8 @@ TEST(IndexedMap, Indexing)
 
     for (int i = 1000; i < 2000; ++i)
         simple_map.Add(i, i+1);
+    EXPECT_EQ(simple_map.Find(-1), simple_map.End());
+    EXPECT_EQ(simple_map.Find(2001), simple_map.End());
     for (int i = 0; i < 2000; ++i)
     {
         const auto found = simple_map.Find(i);
