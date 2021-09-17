@@ -21,6 +21,8 @@ void BkIdxMapBase::Unlock()
 
 
 
+
+
 TEST(IndexedMap, Construct)
 {
     BkIdxMap<int,int> simple_map;
@@ -201,6 +203,6 @@ constexpr int FILLMAX = 1*1000*1000;
 BENCHMARK(FillLocked)->Range(FILLMAX, FILLMAX);
 BENCHMARK(FillUnlocked)->Range(FILLMAX, FILLMAX);
 BENCHMARK(IndexingTime)->Range(FILLMAX, FILLMAX);
+BENCHMARK(LookupNoIndex)->Range(MAX, MAX);
 BENCHMARK(LookupIndexBuilt)->Range(MAX, MAX);
 BENCHMARK(LookupIndexMixed)->Range(MAX, MAX);
-BENCHMARK(LookupNoIndex)->Range(MAX, MAX);

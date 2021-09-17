@@ -78,21 +78,14 @@ protected:
     {
         BkIdxMapBase &base;
         std::unique_lock<std::mutex> lg;
-        LockPrivate(BkIdxMapBase &b)
-            : base(b)
-        {
-        }
-        ~LockPrivate()
-        {
-        }
+        LockPrivate(BkIdxMapBase &b) : base(b) {}
+        ~LockPrivate() {}
         void Wait() // wait for mutation
         {
             while (base.m_state==State::Stable)
                 /*Sleep?*/;
         }
-        void Release()
-        {
-        }
+        void Release() {}
     };
 
 public:
@@ -109,7 +102,7 @@ public:
             base.Unlock();
         }
     };
-    bool IsFastIndexAvailable() const { return m_state == State::Stable; }
+    bool IsFastIndexAvailable() const noexcept { return m_state == State::Stable; }
 };
 
 template <class K, class V>
@@ -138,7 +131,7 @@ public:
 
     inline void Add(const K &, const V &);
     inline void Remove(const K &);
-    inline Iterator Find(const K &);
+    inline Iterator Find(const K &) noexcept;
     inline bool IsFastIndexAvailable() const { return m_state == State::Stable; }
 
     Iterator End() { return m_impl.end(); }
@@ -248,7 +241,7 @@ inline void BkIdxMap<K,V>::Remove(const K& k)
 }
 
 template <class K, class V>
-inline typename BkIdxMap<K,V>::Iterator BkIdxMap<K,V>::Find(const K& k)
+inline typename BkIdxMap<K,V>::Iterator BkIdxMap<K,V>::Find(const K& k) noexcept
 {
     if (IsFastIndexAvailable())
     {
