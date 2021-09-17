@@ -1,0 +1,4 @@
+: foreach *.cpp |> g++ -g -O2 -Wall -std=c++17 -I/usr/local/include -c %f -o %o |> obj/%B.o
+: foreach *.cpp |> g++ -g -O0 -Wall -std=c++17 -I/usr/local/include -c %f -o %o |> dobj/%B.o
+: obj/*.o |> g++ %f -o %o -lbenchmark_main -lbenchmark -pthread -lgtest |> time.exe
+: dobj/*.o |> g++ %f -o %o -lbenchmark -pthread -lgtest -lgtest_main |> test.exe
