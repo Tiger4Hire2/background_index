@@ -118,7 +118,7 @@ class BkIdxMap : BkIdxMapBase
     using Impl = std::map<K, V>;
     using Iterator = typename Impl::iterator;
     Impl m_impl;
-    static constexpr int step = 256;
+    static constexpr int step = 64;
     std::vector<K> m_index_level1; // paired with m_index_iter, holds the k for each iterator 
     std::vector<Iterator> m_index_iter;
     std::vector<K> m_index_level2; // this is a list of sampled values at "step" intervals
