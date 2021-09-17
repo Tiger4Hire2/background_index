@@ -47,7 +47,7 @@
  * 
  * ToDo
  * ----
- * Add a second layer of indexing, time to see the speed impact.
+ * Add a second layer of indexing, time to see the speed impact. (Done: goes from 3* to4* faster)
  * Add more map functions (range-insert would be a good one for example)
 ********************************************************************************************************/
 
@@ -61,7 +61,8 @@ protected:
         MutateBegin, // we are waiting for the bk thread to abort
         Mutating, // we are waiting for the bk thread to abort
         Mutated,  // index requires rebuilding
-        Indexing,  // indexis being built
+        Indexing1,  // indexis being built
+        Indexing2,  // a second layer of sampled key values is being built
         Quit,
         QuitDone
     };
@@ -121,8 +122,11 @@ class BkIdxMap : BkIdxMapBase
         Elem( const K& k, const Iterator& i): std::pair<K,Iterator>(k,i) {}
         bool operator<(const K& k) const { return std::pair<K, Iterator>::first < k; }
     };
+    using IndexTable = std::vector<Elem>;
     Impl m_impl;
-    std::vector<Elem> m_index;
+    IndexTable m_index;
+    static constexpr int step = 256;
+    std::vector<K> m_index_level2; // this is a list of sampled values at "step" intervals
     std::thread m_idxThread;
 
 public:
@@ -155,6 +159,7 @@ BkIdxMap<K,V>::BkIdxMap()
 {
     m_idxThread = std::thread([this](){
         Iterator progress;
+        int lvl2_index{0};
         while(true)
         {
             BkIdxMapBase::LockPrivate priv_lock(*this);
@@ -184,17 +189,33 @@ BkIdxMap<K,V>::BkIdxMap()
                     m_index.clear();
                     progress = m_impl.begin();
                     expected = State::Mutated;
-                    m_state.compare_exchange_strong(expected, State::Indexing);
+                    m_state.compare_exchange_strong(expected, State::Indexing1);
                     break;
-                case State::Indexing:
+                case State::Indexing1:
                     m_index.emplace_back(progress->first, progress);
                     progress++;
                     if (progress==m_impl.end())
                     {
-                        expected = State::Indexing;
-                        m_state.compare_exchange_strong(expected, State::Stable);
+                        expected = State::Indexing1;
+                        lvl2_index = 0;
+                        m_index_level2.clear();
+                        m_state.compare_exchange_strong(expected, State::Indexing2);
                     }
                     break;
+                case State::Indexing2:
+                {
+                    if ((size_t)lvl2_index >= m_index.size())
+                    {
+                        expected = State::Indexing2;
+                        m_state.compare_exchange_strong(expected, State::Stable);
+                    }
+                    else 
+                    {
+                        m_index_level2.emplace_back(m_index[lvl2_index].first);
+                        lvl2_index += step;
+                    }
+                    break;
+                }
             }
         }
     });
@@ -231,7 +252,12 @@ inline typename BkIdxMap<K,V>::Iterator BkIdxMap<K,V>::Find(const K& k)
 {
     if (IsFastIndexAvailable())
     {
-        const auto found  = std::lower_bound(m_index.begin(), m_index.end(), k);
+        const auto found2  = std::lower_bound(m_index_level2.begin(), m_index_level2.end(), k);
+        const auto dist_start = std::max(0,(int)(found2-m_index_level2.begin())-1);
+        const auto section_start = m_index.begin()+(step*dist_start);
+        const auto max_size = std::min(m_index.size()-(section_start-m_index.begin()), (std::size_t)step);
+        const auto section_end = section_start + max_size;
+        const auto found = std::lower_bound(section_start, section_end, k);
         if (found == m_index.end() || (found->first!=k))
             return m_impl.end();
         return found->second;

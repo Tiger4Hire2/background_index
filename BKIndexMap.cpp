@@ -73,17 +73,19 @@ TEST(IndexedMap, Indexing)
     for (int i = 0; i < 1000; ++i)
         simple_map.Add(i, i+1);
     EXPECT_FALSE(simple_map.IsFastIndexAvailable());
+    EXPECT_EQ(simple_map.Find(-1), simple_map.End());
+    EXPECT_EQ(simple_map.Find(1001), simple_map.End());
     for (int i = 0; i < 1000; ++i)
     {
         const auto found = simple_map.Find(i);
-        EXPECT_EQ(found->first, i);
+        ASSERT_EQ(found->first, i);
     }
     while (!simple_map.IsFastIndexAvailable())
        /*wait*/;
     for (int i = 0; i < 1000; ++i)
     {
         const auto found = simple_map.Find(i);
-        EXPECT_EQ(found->first, i);
+        ASSERT_EQ(found->first, i);
     }
     EXPECT_TRUE(simple_map.IsFastIndexAvailable());
 
@@ -92,7 +94,7 @@ TEST(IndexedMap, Indexing)
     for (int i = 0; i < 2000; ++i)
     {
         const auto found = simple_map.Find(i);
-        EXPECT_EQ(found->first, i);
+        ASSERT_EQ(found->first, i);
     }
 }
 
