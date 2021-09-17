@@ -196,7 +196,7 @@ static void LookupIndexMixed(benchmark::State &state)
     }
 }
 
-constexpr int MAX = 16*1000*1000;
+constexpr int MAX = 30*1000*1000;
 constexpr int FILLMAX = 1*1000*1000;
 BENCHMARK(FillLocked)->Range(FILLMAX, FILLMAX);
 BENCHMARK(FillUnlocked)->Range(FILLMAX, FILLMAX);
