@@ -125,7 +125,7 @@ class BkIdxMap : BkIdxMapBase
     using IndexTable = std::vector<Elem>;
     Impl m_impl;
     IndexTable m_index;
-    static constexpr int step = 256;
+    static constexpr int step = 64;
     std::vector<K> m_index_level2; // this is a list of sampled values at "step" intervals
     std::thread m_idxThread;
 
